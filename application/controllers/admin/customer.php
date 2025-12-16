@@ -11,9 +11,16 @@ class Customer extends Admin_Controller
 
     public function index()
     {
-        $data['title']     = 'Data Customer & User Online';
-        // Panggil fungsi gabungan yang baru kita buat
-        $data['customer']  = $this->M_customer->get_all_gabungan();
+        $data['title'] = 'Data Customer & User Online';
+
+        // 1. Ambil filter dari URL (jika ada)
+        $filter = $this->input->get('filter');
+
+        // 2. Kirim $filter ke Model
+        $data['customer'] = $this->M_customer->get_all_gabungan($filter);
+        
+        // 3. Simpan filter terpilih agar dropdown tidak reset saat direfresh
+        $data['selected_filter'] = $filter;
 
         $this->render('admin/customer/index', $data);
     }
@@ -63,8 +70,8 @@ class Customer extends Admin_Controller
             // Kita manipulasi agar strukturnya mirip dengan object customer agar view tidak error
             $fake_customer = new stdClass();
             $fake_customer->nama_customer    = $user->nama_lengkap;
-            $fake_customer->no_hp            = '- (Data Online)';
-            $fake_customer->alamat           = '- (Data Online)';
+            $fake_customer->no_hp            = $user->no_hp ? $user->no_hp : '-';
+            $fake_customer->alamat           = $user->alamat ? $user->alamat : '-';
             $fake_customer->created_at       = $user->created_at;
             $fake_customer->id_user          = $user->id_user;
             $fake_customer->username         = $user->username;

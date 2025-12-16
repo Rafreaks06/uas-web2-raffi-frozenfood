@@ -11,8 +11,26 @@ class OrderOnline extends Admin_Controller {
 
     public function index()
     {
-        $data['title'] = 'Order Online';
-        $data['orders'] = $this->M_order_online->get_all_admin();
+       $data['title'] = 'Data Order Online';
+        
+        // 1. Ambil status dari Filter URL (jika ada)
+        $status = $this->input->get('status');
+
+        // 2. Query Data Manual (menggantikan get_all_admin biar bisa filter)
+        $this->db->select('order_online.*, user.nama_lengkap');
+        $this->db->from('order_online');
+        $this->db->join('user', 'user.id_user = order_online.id_user', 'left');
+        
+        // Jika admin memilih status tertentu, tambahkan WHERE
+        if (!empty($status)) {
+            $this->db->where('order_online.status', $status);
+        }
+
+        $this->db->order_by('order_online.created_at', 'DESC');
+        $data['orders'] = $this->db->get()->result();
+
+        // 3. Simpan status terpilih biar dropdown gak reset
+        $data['selected_status'] = $status;
 
         $this->render('admin/order_online/index', $data);
     }

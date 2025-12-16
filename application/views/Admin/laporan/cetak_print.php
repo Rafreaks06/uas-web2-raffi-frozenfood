@@ -1,7 +1,7 @@
     <!DOCTYPE html>
     <html>
     <head>
-        <title><?= $title ?></title>
+        <title>Laporan Penjualan Excel</title>
         <style>
             body { font-family: Arial, sans-serif; font-size: 12px; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }

@@ -102,40 +102,56 @@ class M_customer extends CI_Model
         return $this->db->get()->result_array();
     }
 
-    // 6. Ambil Daftar Semua Orang (List Gabungan User & Customer)
-    public function get_all_gabungan()
+    public function get_all_gabungan($filter = null)
     {
-        // Ambil Customer Offline
-        $query_customer = "
-            SELECT 
-                id_customer AS id_primary,
-                nama_customer AS nama,
-                no_hp,
-                alamat,
-                created_at,
-                'Offline' AS tipe,
-                id_user
-            FROM customer
-        ";
+        $hasil = [];
 
-        // Ambil User Online (Yang belum jadi customer)
-        $query_user = "
-            SELECT 
-                id_user AS id_primary,
-                nama_lengkap AS nama,
-                '-' AS no_hp,    
-                '-' AS alamat,   
-                created_at,
-                'Online' AS tipe,
-                id_user
-            FROM user 
-            WHERE role = 'user' 
-            AND id_user NOT IN (SELECT id_user FROM customer WHERE id_user IS NOT NULL)
-        ";
+        // --- 1. AMBIL DATA USER (ONLINE) ---
+        // Jika filter kosong (Semua) ATAU filter 'online'
+        // Karena ada parameter $filter di atas, logika ini sekarang akan jalan dengan benar
+        if (empty($filter) || $filter == 'online') {
+            
+            $users = $this->db->get_where('user', ['role' => 'user'])->result();
+            
+            foreach ($users as $u) {
+                $hasil[] = (object) [
+                    'id'           => $u->id_user,
+                    'nama'         => $u->nama_lengkap,
+                    'no_hp'        => $u->no_hp ? $u->no_hp : '-',           
+                    'alamat'       => $u->alamat ? $u->alamat : '-',      
+                    'tipe'         => 'Online',      
+                    'tanggal'      => $u->created_at,
+                    'badge_color'  => 'primary',     
+                    'badge_label'  => 'User Online' 
+                ];
+            }
+        }
 
-        $sql = "SELECT * FROM ($query_customer UNION ALL $query_user) AS gabungan 
-                ORDER BY created_at DESC";
+        // --- 2. AMBIL DATA CUSTOMER (OFFLINE) ---
+        // Jika filter kosong (Semua) ATAU filter 'offline'
+        if (empty($filter) || $filter == 'offline') {
+            
+            $customers = $this->db->get('customer')->result();
 
-        return $this->db->query($sql)->result();
+            foreach ($customers as $c) {
+                $hasil[] = (object) [
+                    'id'           => $c->id_customer,
+                    'nama'         => $c->nama_customer,
+                    'no_hp'        => 'None',
+                    'alamat'       => 'None',
+                    'tipe'         => 'Offline',     
+                    'tanggal'      => $c->created_at,
+                    'badge_color'  => 'success',     
+                    'badge_label'  => 'Customer Offline'
+                ];
+            }
+        }
+
+        // Urutkan data gabungan berdasarkan tanggal terbaru (optional, biar rapi)
+        usort($hasil, function($a, $b) {
+            return strtotime($b->tanggal) - strtotime($a->tanggal);
+        });
+
+        return $hasil;
     }
 }

@@ -51,9 +51,7 @@ class OrderOffline extends Admin_Controller {
         
         // A. Insert Customer
         $customerData = [
-            'nama_customer' => $this->input->post('nama_customer'),
-            'alamat'        => $this->input->post('alamat'),
-            'no_hp'         => $this->input->post('no_hp'),
+            'nama_customer' => $this->input->post('nama_customer')
         ];
         $this->db->insert('customer', $customerData);
         $id_customer = $this->db->insert_id();
