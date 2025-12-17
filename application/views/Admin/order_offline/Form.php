@@ -1,127 +1,132 @@
 <div class="container-fluid">
 
-    <h3><?= $title ?></h3>
-    <form action="<?= base_url('admin/order-offline/store') ?>" method="POST">
+    <h1 class="h3 mb-4 text-gray-800">Tambah Transaksi Offline</h1>
 
-        <h5>Data Customer</h5>
-        <div class="form-group">
-            <label>Nama Customer</label>
-            <input type="text" name="nama_customer" class="form-control" required>
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            
+            <form action="<?= base_url('admin/order-offline/store') ?>" method="POST">
+                
+                <div class="mb-3">
+                <label for="nama_customer" class="form-label">Nama Customer</label>
+                <input type="text" 
+                    class="form-control" 
+                    id="customer_name" 
+                    name="customer_name" 
+                    placeholder="Contoh: Budi Santoso / Ibu Ani" 
+                    required>
+                <small class="text-muted">Masukkan nama pembeli untuk pesanan offline (Walk-in).</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Pilih Produk</label>
+                    <select name="id_produk" id="id_produk" class="form-control" required>
+                        <option value="" data-harga="0" data-stok="0">-- Pilih Produk --</option>
+                        <?php foreach($produk as $p): ?>
+                            <option value="<?= $p->id_produk ?>" 
+                                    data-harga="<?= $p->harga ?>"
+                                    data-stok="<?= $p->stok ?>"
+                                    <?= ($p->stok <= 0) ? 'disabled style="background-color:#ffeeba;"' : '' ?>>
+                                <?= $p->nama_produk ?> (Stok: <?= $p->stok ?>) <?= ($p->stok <= 0) ? '- HABIS' : '' ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="alert alert-info" id="info_stok" style="display:none;">
+                    Harga Satuan: <strong>Rp <span id="harga_display">0</span></strong> <br>
+                    Sisa Stok Tersedia: <strong><span id="stok_display">0</span></strong>
+                </div>
+
+                <div class="form-group">
+                    <label>Jumlah Beli (Qty)</label>
+                    <input type="number" name="qty" id="qty" class="form-control" min="1" value="1" required disabled>
+                    <small class="text-danger font-weight-bold" id="qty_warning" style="display:none;">
+                        * Jumlah melebihi stok yang tersedia!
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label>Total Harga</label>
+                    <input type="text" id="total_display" class="form-control" value="Rp 0" readonly>
+                </div>
+
+                <button type="submit" id="btn_submit" class="btn btn-primary" disabled>Simpan Transaksi</button>
+                <a href="<?= base_url('admin/order-offline') ?>" class="btn btn-secondary">Batal</a>
+
+            </form>
+
         </div>
-        <hr>
-        <h5>Detail Order</h5>
+    </div>
 
-        <table class="table" id="produkTable">
-            <thead>
-                <tr>
-                    <th>Produk</th>
-                    <th>Qty</th>
-                    <th>Harga</th>
-                    <th>Subtotal</th>
-                    <th>#</th>
-                </tr>
-            </thead>
-            <tbody id="produkBody">
-                <tr class="item-row">
-                    <td>
-                        <select name="produk[]" class="form-control produkSelect" required>
-                            <option value="">-- Pilih Produk --</option>
-                            <?php foreach ($produk as $p): ?>
-                                <option value="<?= $p->id_produk ?>" data-harga="<?= $p->harga ?>">
-                                    <?= $p->nama_produk ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </td>
-                    <td><input type="number" class="form-control qty" name="qty[]" value="1" min="1"></td>
-                    <td><input type="text" class="form-control harga" readonly></td>
-                    <td><input type="text" class="form-control subtotal" name="subtotal[]" readonly></td>
-                    <td><button type="button" class="btn btn-danger btn-sm removeRow">X</button></td>
-                </tr>
-            </tbody>
-        </table>
-
-        <button type="button" class="btn btn-info btn-sm" id="addRow">+ Tambah Baris</button>
-
-        <div class="form-group mt-3">
-            <label>Total</label>
-            <input type="text" name="total" id="total" class="form-control" readonly>
-        </div>
-
-        <button class="btn btn-success">Simpan Transaksi</button>
-        <a href="<?= base_url('admin/order-offline') ?>" class="btn btn-secondary">Batal</a>
-    </form>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-    
-const tbody = document.getElementById('produkBody');
+    const produkSelect = document.getElementById('id_produk');
+    const qtyInput     = document.getElementById('qty');
+    const infoStok     = document.getElementById('info_stok');
+    const stokDisplay  = document.getElementById('stok_display');
+    const hargaDisplay = document.getElementById('harga_display');
+    const totalDisplay = document.getElementById('total_display');
+    const qtyWarning   = document.getElementById('qty_warning');
+    const btnSubmit    = document.getElementById('btn_submit');
 
-function hitung() {
-    let total = 0;
+    let stokSaatIni = 0;
+    let hargaSaatIni = 0;
 
-    tbody.querySelectorAll('.item-row').forEach(row => {
-        const harga = parseInt(row.querySelector('.harga').value || 0, 10);
-        const qty   = parseInt(row.querySelector('.qty').value   || 0, 10);
-        const subtotal = harga * qty;
+    // SAAT PRODUK DIPILIH
+    produkSelect.addEventListener('change', function() {
+        // Ambil data dari atribut <option>
+        const selectedOption = this.options[this.selectedIndex];
+        stokSaatIni  = parseInt(selectedOption.getAttribute('data-stok')) || 0;
+        hargaSaatIni = parseInt(selectedOption.getAttribute('data-harga')) || 0;
 
-        row.querySelector('.subtotal').value = subtotal;
-        total += subtotal;
+        if (hargaSaatIni > 0) {
+            // Tampilkan Info
+            infoStok.style.display = 'block';
+            stokDisplay.innerText  = stokSaatIni;
+            hargaDisplay.innerText = new Intl.NumberFormat('id-ID').format(hargaSaatIni);
+
+            // Aktifkan Input Qty
+            qtyInput.disabled = false;
+            qtyInput.max = stokSaatIni; // Set max html attribute
+            qtyInput.value = 1;
+            
+            hitungTotal();
+        } else {
+            resetForm();
+        }
     });
 
-    document.getElementById('total').value = total;
-}
+    // SAAT QTY DIKETIK
+    qtyInput.addEventListener('input', function() {
+        hitungTotal();
+    });
 
-// change produk => isi harga + hitung
-document.addEventListener('change', function(e){
-    if (e.target.classList.contains('produkSelect')) {
-        const option = e.target.selectedOptions[0];
-        const harga  = option ? option.dataset.harga || 0 : 0;
-        const row    = e.target.closest('.item-row');
+    function hitungTotal() {
+        let qty = parseInt(qtyInput.value) || 0;
 
-        row.querySelector('.harga').value = harga;
-        hitung();
-    }
-});
-
-// ubah qty => hitung ulang
-document.addEventListener('input', function(e){
-    if (e.target.classList.contains('qty')) {
-        hitung();
-    }
-});
-
-<?php if ($this->session->flashdata('error_stok')): ?>
-        Swal.fire({
-            icon: 'error',
-            title: 'Ups, Stok Kurang!',
-            text: '<?= $this->session->flashdata('error_stok'); ?>',
-            footer: 'Silakan kurangi jumlah qty atau update stok produk dulu.'
-        });
-    <?php endif; ?>
-
-// tambah baris
-document.getElementById('addRow').addEventListener('click', function () {
-    const firstRow = tbody.querySelector('.item-row');
-    const newRow   = firstRow.cloneNode(true);
-
-    // reset nilai di baris baru
-    newRow.querySelector('.produkSelect').value = '';
-    newRow.querySelector('.harga').value        = '';
-    newRow.querySelector('.qty').value          = 1;
-    newRow.querySelector('.subtotal').value     = '';
-
-    tbody.appendChild(newRow);
-});
-
-// hapus baris
-document.addEventListener('click', function(e){
-    if (e.target.classList.contains('removeRow')) {
-        const rows = tbody.querySelectorAll('.item-row');
-        if (rows.length > 1) {
-            e.target.closest('.item-row').remove();
-            hitung();
+        // Validasi Stok
+        if (qty > stokSaatIni) {
+            qtyWarning.style.display = 'block';
+            btnSubmit.disabled = true;
+            totalDisplay.value = "Stok Tidak Cukup!";
+        } else if (qty <= 0) {
+            btnSubmit.disabled = true;
+            totalDisplay.value = "Rp 0";
+        } else {
+            qtyWarning.style.display = 'none';
+            btnSubmit.disabled = false;
+            let total = hargaSaatIni * qty;
+            totalDisplay.value = "Rp " + new Intl.NumberFormat('id-ID').format(total);
         }
     }
-});
+
+    function resetForm() {
+        infoStok.style.display = 'none';
+        qtyInput.disabled = true;
+        qtyInput.value = '';
+        btnSubmit.disabled = true;
+        totalDisplay.value = "Rp 0";
+    }
 </script>

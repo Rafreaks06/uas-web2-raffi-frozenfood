@@ -14,8 +14,41 @@ class OrderOffline extends Admin_Controller {
 
     public function index()
     {
-        $data['title'] = 'Order Offline';
-        $data['order'] = $this->M_order_offline->get_all();
+        $data['title'] = 'Data Order Offline';
+        
+        // 1. Ambil Input Filter
+        $keyword   = $this->input->get('keyword');
+        $tgl_awal  = $this->input->get('tgl_awal');
+        $tgl_akhir = $this->input->get('tgl_akhir');
+
+        // 2. Mulai Query
+        $this->db->select('order_offline.*, customer.nama_customer'); // Ambil nama dari tabel customer
+        $this->db->from('order_offline');
+        $this->db->join('customer', 'customer.id_customer = order_offline.id_customer', 'left'); // JOIN WAJIB
+
+        // --- FILTER TANGGAL ---
+        if (!empty($tgl_awal)) {
+            $this->db->where('DATE(order_offline.created_at) >=', $tgl_awal);
+        }
+        if (!empty($tgl_akhir)) {
+            $this->db->where('DATE(order_offline.created_at) <=', $tgl_akhir);
+        }
+
+        // --- FILTER PENCARIAN (Keyword) ---
+        if (!empty($keyword)) {
+            $this->db->group_start();
+            $this->db->like('customer.nama_customer', $keyword); 
+            $this->db->or_like('order_offline.id_order_offline', $keyword);
+            $this->db->group_end();
+        }
+
+        $this->db->order_by('order_offline.created_at', 'DESC');
+        $data['orders'] = $this->db->get()->result();
+        
+        $data['keyword']   = $keyword;
+        $data['tgl_awal']  = $tgl_awal;
+        $data['tgl_akhir'] = $tgl_akhir;
+
         $this->render('admin/order_offline/index', $data);
     }
 
@@ -28,95 +61,118 @@ class OrderOffline extends Admin_Controller {
 
     public function store()
     {
-        $produk_ids = $this->input->post('produk'); // Array
-        $qtys       = $this->input->post('qty');    // Array
-        $subtotals  = $this->input->post('subtotal'); // Array
-
-        // 1. Validasi Stok (Looping Cek Dulu)
-        foreach ($produk_ids as $key => $id_produk) {
-            $minta = $qtys[$key];
-            
-            // Ambil stok di DB
-            $cek = $this->db->get_where('produk', ['id_produk' => $id_produk])->row();
-            
-            if ($minta > $cek->stok) {
-                // Jika ada satu saja barang yang stoknya kurang, batalkan semua
-                $this->session->set_flashdata('error_stok', "Stok '$cek->nama_produk' tidak cukup! Sisa: $cek->stok");
-                redirect('admin/order-offline/create');
-                return;
-            }
-        }
-
-        // 2. Jika Lolos Validasi, Baru Simpan Transaksi
+        // 1. TANGKAP INPUT (Sesuai name di Form.php)
+        $input_nama   = $this->input->post('customer_name'); // Dari form input text
+        $id_produk    = $this->input->post('id_produk');     // Single Value
+        $qty          = $this->input->post('qty');           // Single Value
         
-        // A. Insert Customer
-        $customerData = [
-            'nama_customer' => $this->input->post('nama_customer')
-        ];
-        $this->db->insert('customer', $customerData);
-        $id_customer = $this->db->insert_id();
-
-        // B. Insert Order Offline
-        $orderData = [
-            'id_customer' => $id_customer,
-            'total'       => $this->input->post('total'),
-            'status'      => 'Success',
-            'created_at'  => date('Y-m-d H:i:s')
-        ];
-        $this->db->insert('order_offline', $orderData);
-        $id_order = $this->db->insert_id();
-
-        // C. Insert Detail & Kurangi Stok
-        foreach ($produk_ids as $key => $id_produk) {
-            $jumlah_beli = $qtys[$key];
-
-            // Simpan Detail
-            $detailData = [
-                'id_order_offline' => $id_order,
-                'id_produk'        => $id_produk,
-                'qty'              => $jumlah_beli,
-                'subtotal'         => $subtotals[$key]
-            ];
-            $this->db->insert('order_offline_detail', $detailData);
-
-            // KURANGI STOK
-            $this->db->set('stok', 'stok - ' . (int)$jumlah_beli, FALSE);
-            $this->db->where('id_produk', $id_produk);
-            $this->db->update('produk');
+        // Validasi Sederhana
+        if(empty($input_nama) || empty($id_produk)) {
+             $this->session->set_flashdata('error_stok', "Data nama atau produk tidak boleh kosong!");
+             redirect('admin/order-offline/create');
+             return;
         }
+
+        // 2. CEK STOK DULU
+        $produk = $this->db->get_where('produk', ['id_produk' => $id_produk])->row();
+        if ($qty > $produk->stok) {
+            $this->session->set_flashdata('error_stok', "Stok tidak cukup! Sisa: " . $produk->stok);
+            redirect('admin/order-offline/create');
+            return;
+        }
+
+        // Hitung Subtotal di Backend
+        $subtotal_fix = $produk->harga * $qty;
+
+        // ==========================================================
+        // LANGKAH A: SIMPAN NAMA KE TABEL CUSTOMER (SESUAI REQUEST)
+        // ==========================================================
+        $dataCustomer = [
+            'nama_customer' => $input_nama,
+            'alamat'        => '-', // Default strip karena offline biasanya cepat
+            'no_hp'         => '-', 
+            'created_at'    => date('Y-m-d H:i:s')
+        ];
+        $this->db->insert('customer', $dataCustomer);
+        $id_customer_baru = $this->db->insert_id(); // AMBIL ID YANG BARU DIBUAT
+
+        // ==========================================================
+        // LANGKAH B: SIMPAN KE TABEL ORDER OFFLINE (HEADER)
+        // ==========================================================
+        // Disini kita pakai ID Customer yang baru dibuat tadi
+        $orderData = [
+            'id_customer'   => $id_customer_baru, 
+            'total'         => $subtotal_fix,
+            'status'        => 'Success',
+            'created_at'    => date('Y-m-d H:i:s')
+        ];
+        
+        $this->db->insert('order_offline', $orderData);
+        $id_order = $this->db->insert_id(); 
+
+        // ==========================================================
+        // LANGKAH C: SIMPAN KE TABEL DETAIL
+        // ==========================================================
+        $detailData = [
+            'id_order_offline' => $id_order,
+            'id_produk'        => $id_produk,
+            'qty'              => $qty,
+            'subtotal'         => $subtotal_fix
+        ];
+        $this->db->insert('order_offline_detail', $detailData);
+
+        // ==========================================================
+        // LANGKAH D: KURANGI STOK
+        // ==========================================================
+        $this->db->set('stok', 'stok - ' . (int)$qty, FALSE);
+        $this->db->where('id_produk', $id_produk);
+        $this->db->update('produk');
 
         $this->session->set_flashdata('success', 'Transaksi berhasil disimpan!');
         redirect('admin/order-offline');
     }
         
-
     public function detail($id)
     {
-        $this->load->model('M_order_offline');
-        $this->load->model('M_order_offline_detail');
+        // Load data order + Nama Customer (lewat Join di Model atau Query langsung)
+        $this->db->select('order_offline.*, customer.nama_customer, customer.alamat, customer.no_hp');
+        $this->db->from('order_offline');
+        $this->db->join('customer', 'customer.id_customer = order_offline.id_customer', 'left');
+        $this->db->where('order_offline.id_order_offline', $id);
+        $data['order'] = $this->db->get()->row();
 
-        $data['order']  = $this->M_order_offline->get_by_id($id);
         $data['detail'] = $this->M_order_offline_detail->get_detail($id);
-
-        $data['title'] = "Detail Order Offline";
+        $data['title']  = "Detail Order Offline";
 
         $this->render('admin/order_offline/detail', $data);
     }
+
     public function cetak($id)
     {
-        // 1. Ambil data order dan detailnya
-        $data['order']  = $this->M_order_offline->get_by_id($id);
+        // Query manual biar pasti dapat nama customer
+        $this->db->select('order_offline.*, customer.nama_customer');
+        $this->db->from('order_offline');
+        $this->db->join('customer', 'customer.id_customer = order_offline.id_customer', 'left');
+        $this->db->where('order_offline.id_order_offline', $id);
+        $data['order'] = $this->db->get()->row();
+
         $data['detail'] = $this->M_order_offline_detail->get_detail($id);
-        
-        // 2. Load view khusus cetak (tanpa sidebar/header admin)
         $this->load->view('admin/order_offline/cetak', $data);
     }
 
-
     public function delete($id)
     {
+        // Hapus detail dulu
         $this->db->delete('order_offline_detail', ['id_order_offline' => $id]);
+        
+        // Cek dulu ID customernya siapa (Opsional: kalau mau hapus data customernya juga)
+        // $order = $this->db->get_where('order_offline', ['id_order_offline' => $id])->row();
+        
+        // Hapus header
         $this->db->delete('order_offline', ['id_order_offline' => $id]);
+        
+        // (Opsional) Hapus customer 'sampah' jika mau
+        // $this->db->delete('customer', ['id_customer' => $order->id_customer]);
 
         redirect('admin/order-offline');
     }

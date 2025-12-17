@@ -48,70 +48,89 @@ class Order_online extends CI_Controller {
     }
 
     public function store()
-    {
-        // 1. Ambil Input
-        $id_produk = $this->input->post('id_produk');
-        $qty       = $this->input->post('qty');
+        {
+            // 1. AMBIL INPUT
+            $id_produk = $this->input->post('id_produk');
+            $qty       = $this->input->post('qty');
 
-        // 2. CEK STOK PRODUK DULU
-        $produk = $this->db->get_where('produk', ['id_produk' => $id_produk])->row();
+            // --- [FIX] CEK APAKAH DATA KOSONG (Akibat File Terlalu Besar) ---
+            // Jika file > limit server, $_POST akan otomatis kosong. Kita tangkap disini.
+            if (empty($id_produk) || empty($qty)) {
+                $this->session->set_flashdata('error_upload', 'Gagal memproses. File bukti bayar terlalu besar atau koneksi terputus. Mohon gunakan file gambar < 2MB.');
+                redirect('user/order-online/create');
+                return; 
+            }
 
-        if ($qty > $produk->stok) {
-            // Jika minta lebih banyak dari stok
-            $this->session->set_flashdata('error_stok', "Stok tidak cukup! Sisa stok: " . $produk->stok);
-            redirect('user/order-online/create');
-            return; // Stop proses
+            // 2. CEK STOK PRODUK DULU
+            $produk = $this->db->get_where('produk', ['id_produk' => $id_produk])->row();
+
+            // --- [FIX] CEK APAKAH PRODUK DITEMUKAN ---
+            // Mencegah error jika ID produk tidak valid
+            if (!$produk) {
+                $this->session->set_flashdata('error', 'Produk tidak ditemukan atau tidak valid.');
+                redirect('user/order-online/create');
+                return;
+            }
+
+            if ($qty > $produk->stok) {
+                $this->session->set_flashdata('error_stok', "Stok tidak cukup! Sisa stok: " . $produk->stok);
+                redirect('user/order-online/create');
+                return;
+            }
+
+            // 3. UPLOAD BUKTI BAYAR
+            $config['upload_path']   = './assets/bukti/';
+            $config['allowed_types'] = 'jpg|jpeg|png';
+            $config['max_size']      = 2048; // Batas CI 2MB
+            $config['encrypt_name']  = TRUE; 
+
+            $this->load->library('upload', $config);
+
+            if (!$this->upload->do_upload('bukti_bayar')) {
+                // Tampilkan error. Jika error kosong, berarti file kena limit server
+                $error = $this->upload->display_errors();
+                if(empty($error)) {
+                    $error = "File terlalu besar (Melebihi batas upload server).";
+                }
+                
+                $this->session->set_flashdata('error_upload', $error);
+                redirect('user/order-online/create');
+                return;
+            }
+
+            $bukti = $this->upload->data('file_name');
+
+            // 4. HITUNG TOTAL & SIMPAN DATA
+            $subtotal = $produk->harga * $qty;
+
+            $orderData = [
+                'id_user'     => $this->session->userdata('id_user'),
+                'total'       => $subtotal,
+                'bukti_bayar' => $bukti,
+                'status'      => 'Pending',
+                'created_at'  => date('Y-m-d H:i:s')
+            ];
+            $this->db->insert('order_online', $orderData);
+            $id_order_online = $this->db->insert_id();
+
+            // 5. INSERT KE DETAIL
+            $detailData = [
+                'id_order_online' => $id_order_online,
+                'id_produk'       => $id_produk,
+                'qty'             => $qty,
+                'subtotal'        => $subtotal
+            ];
+            $this->db->insert('order_online_detail', $detailData);
+
+            // 6. KURANGI STOK
+            $this->db->set('stok', 'stok - ' . (int)$qty, FALSE);
+            $this->db->where('id_produk', $id_produk);
+            $this->db->update('produk');
+
+            // 7. SUKSES
+            $this->session->set_flashdata('success', 'Order berhasil dibuat!');
+            redirect('user/order-online');
         }
-
-        // 3. Upload Bukti Bayar (Kode Lama Kamu)
-        $config['upload_path']   = './assets/bukti/';
-        $config['allowed_types'] = 'jpg|jpeg|png';
-        $config['max_size']      = 2048;
-        $config['encrypt_name']  = TRUE; // Enkripsi nama file biar aman
-
-        $this->load->library('upload', $config);
-
-        if (!$this->upload->do_upload('bukti_bayar')) {
-            $this->session->set_flashdata('error_upload', $this->upload->display_errors());
-            redirect('user/order-online/create');
-            return;
-        }
-
-        $bukti = $this->upload->data('file_name');
-
-        // 4. Hitung Total
-        $subtotal = $produk->harga * $qty;
-
-        // 5. Insert ke order_online
-        $orderData = [
-            'id_user'     => $this->session->userdata('id_user'),
-            'total'       => $subtotal,
-            'bukti_bayar' => $bukti,
-            'status'      => 'Pending',
-            'created_at'  => date('Y-m-d H:i:s')
-        ];
-        $this->db->insert('order_online', $orderData);
-        $id_order_online = $this->db->insert_id();
-
-        // 6. Insert ke Detail
-        $detailData = [
-            'id_order_online' => $id_order_online,
-            'id_produk'       => $id_produk,
-            'qty'             => $qty,
-            'subtotal'        => $subtotal
-        ];
-        $this->db->insert('order_online_detail', $detailData);
-
-        // 7. KURANGI STOK (UPDATE PRODUK)
-        // Rumus: stok = stok - qty
-        $this->db->set('stok', 'stok - ' . (int)$qty, FALSE);
-        $this->db->where('id_produk', $id_produk);
-        $this->db->update('produk');
-
-        // 8. Sukses
-        $this->session->set_flashdata('success', 'Order berhasil dibuat!');
-        redirect('user/order-online');
-    }
     public function cancel($id_order_online)
     {
         // 1. Ambil ID User yang login (Keamanan: biar gak asal batalin punya orang)

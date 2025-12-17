@@ -15,15 +15,36 @@ class Customer extends Admin_Controller
 
         // 1. Ambil filter dari URL (jika ada)
         $filter = $this->input->get('filter');
+        $keyword = $this->input->get('keyword');
 
         // 2. Kirim $filter ke Model
-        $data['customer'] = $this->M_customer->get_all_gabungan($filter);
+        $data['customer'] = $this->M_customer->get_all_gabungan($filter, $keyword);
         
         // 3. Simpan filter terpilih agar dropdown tidak reset saat direfresh
         $data['selected_filter'] = $filter;
+        $data['keyword'] = $keyword;
 
         $this->render('admin/customer/index', $data);
     }
+    // ... fungsi index dan detail tetap ada ...
+
+    // --- TAMBAHAN BARU: FUNGSI UNTUK LIVE SEARCH ---
+    public function ajax_search()
+    {
+        $keyword = $this->input->post('keyword');
+        $filter  = $this->input->post('filter'); // Kita butuh status filter saat ini
+
+        // Ambil data dari model
+        $data['customer'] = $this->M_customer->get_all_gabungan($filter, $keyword);
+        
+        // Kirim variabel penentu (apakah sedang offline?) untuk hide/show kolom
+        $data['is_offline'] = ($filter == 'offline');
+
+        // Load view khusus potongan baris tabel
+        $this->load->view('admin/customer/table_rows', $data);
+    }
+
+    
 
     // UPDATE FUNGSI DETAIL
     // Kita perlu parameter tambahan $tipe karena User Online ID-nya beda tabel

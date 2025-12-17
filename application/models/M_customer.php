@@ -102,43 +102,57 @@ class M_customer extends CI_Model
         return $this->db->get()->result_array();
     }
 
-    public function get_all_gabungan($filter = null)
+   public function get_all_gabungan($filter = null, $keyword = null)
     {
         $hasil = [];
 
         // --- 1. AMBIL DATA USER (ONLINE) ---
-        // Jika filter kosong (Semua) ATAU filter 'online'
-        // Karena ada parameter $filter di atas, logika ini sekarang akan jalan dengan benar
         if (empty($filter) || $filter == 'online') {
             
-            $users = $this->db->get_where('user', ['role' => 'user'])->result();
+            $this->db->select('*');
+            $this->db->from('user');
+            $this->db->where('role', 'user');
+
+            // LOGIKA PENCARIAN NAMA USER
+            if (!empty($keyword)) {
+                $this->db->like('nama_lengkap', $keyword);
+            }
+
+            $users = $this->db->get()->result();
             
             foreach ($users as $u) {
                 $hasil[] = (object) [
                     'id'           => $u->id_user,
                     'nama'         => $u->nama_lengkap,
-                    'no_hp'        => $u->no_hp ? $u->no_hp : '-',           
-                    'alamat'       => $u->alamat ? $u->alamat : '-',      
+                    'no_hp'        => $u->no_hp ? $u->no_hp : '-',  
+                    'alamat'       => $u->alamat ? $u->alamat : '-',
                     'tipe'         => 'Online',      
                     'tanggal'      => $u->created_at,
                     'badge_color'  => 'primary',     
-                    'badge_label'  => 'User Online' 
+                    'badge_label'  => 'User Online'
                 ];
             }
         }
 
         // --- 2. AMBIL DATA CUSTOMER (OFFLINE) ---
-        // Jika filter kosong (Semua) ATAU filter 'offline'
         if (empty($filter) || $filter == 'offline') {
             
-            $customers = $this->db->get('customer')->result();
+            $this->db->select('*');
+            $this->db->from('customer');
+
+            // LOGIKA PENCARIAN NAMA CUSTOMER
+            if (!empty($keyword)) {
+                $this->db->like('nama_customer', $keyword);
+            }
+
+            $customers = $this->db->get()->result();
 
             foreach ($customers as $c) {
                 $hasil[] = (object) [
                     'id'           => $c->id_customer,
                     'nama'         => $c->nama_customer,
-                    'no_hp'        => 'None',
-                    'alamat'       => 'None',
+                    'no_hp'        => $c->no_hp,
+                    'alamat'       => $c->alamat,
                     'tipe'         => 'Offline',     
                     'tanggal'      => $c->created_at,
                     'badge_color'  => 'success',     
@@ -147,7 +161,7 @@ class M_customer extends CI_Model
             }
         }
 
-        // Urutkan data gabungan berdasarkan tanggal terbaru (optional, biar rapi)
+        // Urutkan berdasarkan tanggal terbaru
         usort($hasil, function($a, $b) {
             return strtotime($b->tanggal) - strtotime($a->tanggal);
         });

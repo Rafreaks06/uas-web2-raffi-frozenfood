@@ -1,5 +1,8 @@
 <div class="container-fluid">
 
+    <div class="flash-data" data-flashdata="<?= $this->session->flashdata('success'); ?>"></div>
+    <div class="flash-data-error" data-flashdata="<?= $this->session->flashdata('error'); ?>"></div>
+
     <h3><?= $title ?></h3>
     <a href="<?= base_url('admin/produk/create') ?>" class="btn btn-danger mb-3">Tambah Produk</a>
 
@@ -33,35 +36,79 @@
                             data-target="#imgModal"
                             onclick="showImage('<?= base_url('assets/uploads/produk/'.$p->gambar) ?>')"
                             onerror="this.src='https://via.placeholder.com/70'">
-                            
                     </td>
 
                     <td>
                         <a href="<?= base_url('admin/produk/edit/'.$p->id_produk) ?>" 
                            class="btn btn-sm btn-warning">Edit</a>
 
-                        <a onclick="return confirm('Yakin?')" 
-                           href="<?= base_url('admin/produk/delete/'.$p->id_produk) ?>" 
-                           class="btn btn-sm btn-danger">Hapus</a>
+                        <a href="<?= base_url('admin/produk/delete/'.$p->id_produk) ?>" 
+                           class="btn btn-sm btn-danger tombol-hapus">Hapus</a>
                     </td>
                 </tr>
             <?php endforeach ?>
         </tbody>
     </table>
-    <!-- Modal View Gambar -->
-<div class="modal fade" id="imgModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <img id="modalImage" src="" class="img-fluid rounded">
+
+    <div class="modal fade" id="imgModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <img id="modalImage" src="" class="img-fluid rounded">
+        </div>
+      </div>
     </div>
-  </div>
+
 </div>
 
-<script>
-function showImage(src) {
-    document.getElementById('modalImage').src = src;
-}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <script>
+    // FUNGSI MODAL GAMBAR (Bawaan kamu)
+    function showImage(src) {
+        document.getElementById('modalImage').src = src;
+    }
+
+    // --- LOGIC SWEETALERT2 ---
+
+    // A. Notifikasi Sukses/Gagal (Flashdata)
+    const flashData = $('.flash-data').data('flashdata');
+    const flashDataError = $('.flash-data-error').data('flashdata');
+
+    if (flashData) {
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: flashData
+        });
+    }
+
+    if (flashDataError) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            text: flashDataError
+        });
+    }
+
+    // B. Konfirmasi Hapus
+    $('.tombol-hapus').on('click', function(e) {
+        e.preventDefault(); // Matikan aksi default link (biar gak langsung pindah halaman)
+        
+        const href = $(this).attr('href'); // Ambil link dari tombol yang diklik
+
+        Swal.fire({
+            title: 'Apakah anda yakin?',
+            text: "Data produk akan dihapus permanen!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, Hapus Data!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Jika user klik Ya, baru arahkan ke link hapus
+                document.location.href = href;
+            }
+        });
+    });
 </script>
-
-
-</div>

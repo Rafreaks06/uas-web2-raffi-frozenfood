@@ -37,7 +37,7 @@ class M_order_online extends CI_Model {
     public function get_by_id_admin($id)
     {
         return $this->db
-            ->select('order_online.*, user.username, user.nama_lengkap')
+            ->select('order_online.*, user.username, user.nama_lengkap, user.no_hp, user.alamat')
             ->from('order_online')
             ->join('user', 'user.id_user = order_online.id_user')
             ->where('order_online.id_order_online', $id)

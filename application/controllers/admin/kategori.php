@@ -51,10 +51,21 @@ class Kategori extends Admin_Controller {
 
         redirect('admin/kategori');
     }
-
     public function delete($id)
     {
-        $this->M_kategori->delete($id);
+        // 1. Cek dulu, apakah ada produk yang pakai kategori ini?
+        // Kita hitung jumlah produk yang punya id_kategori = $id
+        $jumlah_produk = $this->db->get_where('produk', ['id_kategori' => $id])->num_rows();
+
+        if ($jumlah_produk > 0) {
+            // JIKA ADA: Beri pesan error dan jangan dihapus
+            $this->session->set_flashdata('error', "Gagal hapus! Kategori ini masih digunakan oleh $jumlah_produk produk. Hapus atau pindahkan produknya terlebih dahulu.");
+        } else {
+            // JIKA KOSONG: Aman untuk dihapus
+            $this->db->delete('kategori', ['id_kategori' => $id]);
+            $this->session->set_flashdata('success', 'Data kategori berhasil dihapus.');
+        }
+
         redirect('admin/kategori');
     }
 }
