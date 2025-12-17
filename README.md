@@ -15,7 +15,7 @@ Project ini dibuat sebagai tugas mata kuliah Web Design / Pemrograman Web.
 *(Ganti bagian ini dengan screenshot aplikasi kamu nanti)*
 | Dashboard Admin | Transaksi Offline | Detail Order |
 | :---: | :---: | :---: |
-| ![Dashboard](showcase/image3.png) | ![Offline](showcase/image2.png) | ![Detail](showcase/image1.png) |
+| ![Dashboard](showcase/image3.png) | ![Offline](showcase/image2.png) | ![Detail](showcase/image.png) |
 
 ---
 
