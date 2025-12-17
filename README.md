@@ -12,7 +12,6 @@ Project ini dibuat sebagai tugas mata kuliah Web Design / Pemrograman Web.
 ---
 
 ## 📸 Screenshots
-*(Ganti bagian ini dengan screenshot aplikasi kamu nanti)*
 | Dashboard Admin | Transaksi Offline | Detail Order |
 | :---: | :---: | :---: |
 | ![Detail Order](showcase/image3.png) | ![Dashboard](showcase/image2.png) | ![Transaksi Offline](showcase/image.png) |
