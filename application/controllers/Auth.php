@@ -74,19 +74,19 @@ class Auth extends CI_Controller {
     }
 
     public function register_process() {
-        // 1. Validasi Nama & Username
+        
         $this->form_validation->set_rules('nama_lengkap', 'Nama Lengkap', 'required|trim');
         $this->form_validation->set_rules('username', 'Username', 'required|trim|is_unique[user.username]', [
             'is_unique' => 'Username ini sudah terpakai, pilih yang lain.'
         ]);
 
-        // 2. TAMBAHAN BARU: Validasi Email
+        
         $this->form_validation->set_rules('email', 'Email', 'required|valid_email|trim|is_unique[user.email]', [
             'is_unique'   => 'Email ini sudah terdaftar.',
             'valid_email' => 'Format email tidak valid.'
         ]);
 
-        // 3. Validasi Password
+        
         $this->form_validation->set_rules('password', 'Password', 'required|min_length[6]', [
             'min_length' => 'Password minimal 6 karakter'
         ]);
@@ -100,10 +100,10 @@ class Auth extends CI_Controller {
             return;
         }
 
-        // 4. Simpan ke Database
+        
         $data = [
             'nama_lengkap' => $this->input->post('nama_lengkap', TRUE),
-            'email'        => $this->input->post('email', TRUE), // <-- Simpan Email
+            'email'        => $this->input->post('email', TRUE), 
             'username'     => $this->input->post('username', TRUE),
             'password'     => password_hash($this->input->post('password', TRUE), PASSWORD_DEFAULT),
             'role'         => 'user',
@@ -119,9 +119,9 @@ class Auth extends CI_Controller {
         }
     }
 
-    // --- FITUR BARU: FORGOT PASSWORD ---
+    
 
-    // --- FITUR LUPA PASSWORD (MODIFIKASI LANGSUNG RESET) ---
+    
 
     public function forgot_password() {
         if ($this->session->userdata('logged_in')) {
@@ -131,7 +131,7 @@ class Auth extends CI_Controller {
     }
 
     public function forgot_password_process() {
-        // 1. Validasi Input Email
+        
         $this->form_validation->set_rules('email', 'Email', 'required|valid_email|trim');
 
         if ($this->form_validation->run() == FALSE) {
@@ -142,27 +142,27 @@ class Auth extends CI_Controller {
 
         $email = $this->input->post('email', TRUE);
         
-        // 2. Cek apakah email ada di database
+        
         $user = $this->M_user->get_by_email($email);
 
         if ($user) {
-            // Email DITEMUKAN:
-            // Jangan redirect, tapi langsung muat tampilan Reset Password
-            // Kita kirim data email ke view agar nanti bisa dikirim balik saat update
+            
+            
+            
             $data['email'] = $user->email; 
             
             $this->session->set_flashdata('success', 'Email ditemukan. Silakan buat password baru.');
-            $this->load->view('auth/reset_password_direct', $data); // Load view baru
+            $this->load->view('auth/reset_password_direct', $data); 
         } else {
-            // Email TIDAK DITEMUKAN
+            
             $this->session->set_flashdata('error', 'Email tidak terdaftar dalam sistem.');
             redirect('auth/forgot_password');
         }
     }
 
     public function reset_password_process() {
-        // 1. Validasi Password Baru
-        $this->form_validation->set_rules('email', 'Email', 'required'); // Hidden input
+        
+        $this->form_validation->set_rules('email', 'Email', 'required'); 
         $this->form_validation->set_rules('password', 'Password Baru', 'required|min_length[6]', [
             'min_length' => 'Password minimal 6 karakter'
         ]);
@@ -171,7 +171,7 @@ class Auth extends CI_Controller {
         ]);
 
         if ($this->form_validation->run() == FALSE) {
-            // Jika gagal validasi, kembalikan ke flow awal atau tampilkan error
+            
             $this->session->set_flashdata('error', validation_errors());
             redirect('auth/forgot_password'); 
             return;
@@ -180,14 +180,14 @@ class Auth extends CI_Controller {
         $email = $this->input->post('email', TRUE);
         $new_password = $this->input->post('password', TRUE);
 
-        // 2. Ambil User berdasarkan Email
+        
         $user = $this->M_user->get_by_email($email);
 
         if ($user) {
-            // 3. Update Password
+            
             $newPassHashed = password_hash($new_password, PASSWORD_DEFAULT);
             
-            // Kita gunakan ID user yang ditemukan untuk update
+            
             if ($this->M_user->update($user->id_user, ['password' => $newPassHashed])) {
                 $this->session->set_flashdata('success', 'Password berhasil direset. Silakan login dengan password baru.');
                 redirect('auth/login');
@@ -202,10 +202,10 @@ class Auth extends CI_Controller {
     }
     public function logout()
 {
-    // 1. Hapus semua session
+    
     $this->session->sess_destroy();
     
-    // 2. Redirect ke halaman login
+    
     redirect('auth');
 }
 }

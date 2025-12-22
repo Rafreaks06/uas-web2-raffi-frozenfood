@@ -17,20 +17,20 @@ class Order_online extends CI_Controller {
 
     public function index()
 {
-    // 1. Ambil ID User dari session login
+    
     $id_user = $this->session->userdata('id_user');
 
-    // 2. Kita filter query-nya SEBELUM memanggil data
-    // Pastikan tabel database kamu punya kolom 'id_user'
+    
+    
     $this->db->where('id_user', $id_user);
-    $this->db->order_by('id_order_online', 'DESC'); // Opsional: urutkan dari yang terbaru
+    $this->db->order_by('id_order_online', 'DESC'); 
 
-    // 3. Ambil data (menggunakan direct query agar lebih aman jika Model-nya belum diupdate)
+    
     $data['orders'] = $this->db->get('order_online')->result(); 
     
-    // CATATAN: Jika kamu tetap ingin pakai Model, pastikan fungsi get_all() di model mendukung chaining Query Builder,
-    // atau buat fungsi baru di Model: get_by_user($id_user).
-    // Tapi cara di atas ($this->db->get) adalah cara tercepat tanpa ubah Model.
+    
+    
+    
 
     $this->load->view('user/template/header');
     $this->load->view('user/template/sidebar');
@@ -49,23 +49,23 @@ class Order_online extends CI_Controller {
 
     public function store()
         {
-            // 1. AMBIL INPUT
+            
             $id_produk = $this->input->post('id_produk');
             $qty       = $this->input->post('qty');
 
-            // --- [FIX] CEK APAKAH DATA KOSONG (Akibat File Terlalu Besar) ---
-            // Jika file > limit server, $_POST akan otomatis kosong. Kita tangkap disini.
+            
+            
             if (empty($id_produk) || empty($qty)) {
                 $this->session->set_flashdata('error_upload', 'Gagal memproses. File bukti bayar terlalu besar atau koneksi terputus. Mohon gunakan file gambar < 2MB.');
                 redirect('user/order-online/create');
                 return; 
             }
 
-            // 2. CEK STOK PRODUK DULU
+            
             $produk = $this->db->get_where('produk', ['id_produk' => $id_produk])->row();
 
-            // --- [FIX] CEK APAKAH PRODUK DITEMUKAN ---
-            // Mencegah error jika ID produk tidak valid
+            
+            
             if (!$produk) {
                 $this->session->set_flashdata('error', 'Produk tidak ditemukan atau tidak valid.');
                 redirect('user/order-online/create');
@@ -78,16 +78,16 @@ class Order_online extends CI_Controller {
                 return;
             }
 
-            // 3. UPLOAD BUKTI BAYAR
+            
             $config['upload_path']   = './assets/bukti/';
             $config['allowed_types'] = 'jpg|jpeg|png';
-            $config['max_size']      = 2048; // Batas CI 2MB
+            $config['max_size']      = 2048; 
             $config['encrypt_name']  = TRUE; 
 
             $this->load->library('upload', $config);
 
             if (!$this->upload->do_upload('bukti_bayar')) {
-                // Tampilkan error. Jika error kosong, berarti file kena limit server
+                
                 $error = $this->upload->display_errors();
                 if(empty($error)) {
                     $error = "File terlalu besar (Melebihi batas upload server).";
@@ -100,7 +100,7 @@ class Order_online extends CI_Controller {
 
             $bukti = $this->upload->data('file_name');
 
-            // 4. HITUNG TOTAL & SIMPAN DATA
+            
             $subtotal = $produk->harga * $qty;
 
             $orderData = [
@@ -113,7 +113,7 @@ class Order_online extends CI_Controller {
             $this->db->insert('order_online', $orderData);
             $id_order_online = $this->db->insert_id();
 
-            // 5. INSERT KE DETAIL
+            
             $detailData = [
                 'id_order_online' => $id_order_online,
                 'id_produk'       => $id_produk,
@@ -122,21 +122,21 @@ class Order_online extends CI_Controller {
             ];
             $this->db->insert('order_online_detail', $detailData);
 
-            // 6. KURANGI STOK
+            
             $this->db->set('stok', 'stok - ' . (int)$qty, FALSE);
             $this->db->where('id_produk', $id_produk);
             $this->db->update('produk');
 
-            // 7. SUKSES
+            
             $this->session->set_flashdata('success', 'Order berhasil dibuat!');
             redirect('user/order-online');
         }
     public function cancel($id_order_online)
     {
-        // 1. Ambil ID User yang login (Keamanan: biar gak asal batalin punya orang)
+        
         $id_user = $this->session->userdata('id_user');
 
-        // 2. Cek apakah order ini milik user tersebut DAN statusnya masih Pending
+        
         $order = $this->db->get_where('order_online', [
             'id_order_online' => $id_order_online,
             'id_user'         => $id_user,
@@ -144,18 +144,18 @@ class Order_online extends CI_Controller {
         ])->row();
 
         if ($order) {
-            // 3. LOGIKA KEMBALIKAN STOK
-            // Ambil barang apa saja yang ada di order ini
+            
+            
             $details = $this->db->get_where('order_online_detail', ['id_order_online' => $id_order_online])->result();
 
             foreach ($details as $d) {
-                // Balikin stok ke tabel produk
+                
                 $this->db->set('stok', 'stok + ' . (int)$d->qty, FALSE);
                 $this->db->where('id_produk', $d->id_produk);
                 $this->db->update('produk');
             }
 
-            // 4. Update status jadi Cancelled
+            
             $this->db->where('id_order_online', $id_order_online);
             $this->db->update('order_online', ['status' => 'Cancelled']);
 
@@ -164,7 +164,7 @@ class Order_online extends CI_Controller {
             $this->session->set_flashdata('error', 'Gagal membatalkan. Pesanan mungkin sudah diproses admin atau bukan milik Anda.');
         }
 
-        // Redirect kembali ke halaman detail
+        
         redirect('user/order-online/detail/' . $id_order_online);
     }
 

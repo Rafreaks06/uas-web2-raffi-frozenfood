@@ -7,7 +7,7 @@ class Dashboard extends CI_Controller {
     {
         parent::__construct();
 
-        // harus login dan role = user
+        
         if (!$this->session->userdata('logged_in') ||
             $this->session->userdata('role') != 'user') {
             redirect('auth');
@@ -21,7 +21,7 @@ class Dashboard extends CI_Controller {
 
         $this->load->view('user/template/header', $data);
         $this->load->view('user/template/sidebar');
-        $this->load->view('user/template/topbar'); // TAMBAHKAN INI
+        $this->load->view('user/template/topbar'); 
         $this->load->view('user/dashboard', $data);
         $this->load->view('user/template/footer');
     }

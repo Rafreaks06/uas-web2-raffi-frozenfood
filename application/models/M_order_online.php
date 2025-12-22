@@ -45,7 +45,7 @@ class M_order_online extends CI_Model {
             ->row();
     }
 
-    // --- ADDED THIS FUNCTION HERE ---
+    
     public function update_status($id_order_online, $status)
     {
         $data = array(

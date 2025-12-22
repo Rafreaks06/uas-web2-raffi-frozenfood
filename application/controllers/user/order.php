@@ -28,7 +28,7 @@ class Order extends CI_Controller {
 
     public function save() {
 
-        // Upload bukti pembayaran
+        
         $config['upload_path'] = './uploads/order/';
         $config['allowed_types'] = 'jpg|jpeg|png';
         $config['encrypt_name'] = TRUE;
@@ -42,7 +42,7 @@ class Order extends CI_Controller {
 
         $file = $this->upload->data('file_name');
 
-        // Simpan database
+        
         $data = [
             'id_user' => $this->session->userdata('id_user'),
             'id_produk' => $this->input->post('produk'),

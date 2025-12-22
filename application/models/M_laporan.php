@@ -5,7 +5,7 @@ class M_laporan extends CI_Model {
 
     public function get_laporan_periode($tgl_awal, $tgl_akhir)
     {
-        // 1. Query untuk Order OFFLINE (Ambil nama dari tabel 'customer')
+        
         $query_offline = "
             SELECT 
                 o.id_order_offline AS id_transaksi,
@@ -27,7 +27,7 @@ class M_laporan extends CI_Model {
             AND o.status = 'Success'
         ";
 
-        // 2. Query untuk Order ONLINE (Ambil nama dari tabel 'user')
+        
         $query_online = "
             SELECT 
                 o.id_order_online AS id_transaksi,
@@ -49,7 +49,7 @@ class M_laporan extends CI_Model {
             AND o.status = 'Success'
         ";
 
-        // 3. Gabungkan Query
+        
         $sql = "SELECT * FROM ($query_offline UNION ALL $query_online) AS laporanku 
                 ORDER BY tanggal ASC"; 
 

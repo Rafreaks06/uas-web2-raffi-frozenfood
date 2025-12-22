@@ -3,7 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class M_customer extends CI_Model
 {
-    // 1. Ambil Semua Customer (Murni Tabel Customer)
+    
     public function get_all()
     {
         return $this->db->order_by('created_at', 'DESC')
@@ -11,7 +11,7 @@ class M_customer extends CI_Model
                         ->result();
     }
 
-    // 2. Ambil Detail Customer by ID (Join ke User)
+    
     public function get_by_id($id)
     {
         $this->db->select('
@@ -27,7 +27,7 @@ class M_customer extends CI_Model
         return $this->db->get()->row();
     }
 
-    // 3. Ambil Order Offline Saja
+    
     public function get_orders_by_customer($id)
     {
         return $this->db->where('id_customer', $id)
@@ -36,12 +36,12 @@ class M_customer extends CI_Model
                         ->result();
     }
 
-    // =========================================================
-    // PERBAIKAN UTAMA DI SINI (MENGHINDARI BUG ORDER TERTUKAR)
-    // =========================================================
+    
+    
+    
     public function get_history_gabungan($id_customer)
     {
-        // A. Ambil Data OFFLINE (Pasti milik customer ini)
+        
         $this->db->select("
             id_order_offline AS id_order, 
             total, 
@@ -53,13 +53,13 @@ class M_customer extends CI_Model
         $this->db->order_by('created_at', 'DESC');
         $offline = $this->db->get('order_offline')->result_array();
 
-        // B. Ambil Data ONLINE (Hanya jika terhubung ke user)
+        
         $online = [];
         
-        // Cek dulu customer ini connect ke user ID berapa
+        
         $cust = $this->db->get_where('customer', ['id_customer' => $id_customer])->row();
 
-        // Pastikan id_user ada isinya dan bukan 0/NULL
+        
         if ($cust && !empty($cust->id_user)) {
             $this->db->select("
                 id_order_online AS id_order, 
@@ -68,23 +68,23 @@ class M_customer extends CI_Model
                 created_at AS tanggal, 
                 'Online' AS jenis_order
             ");
-            $this->db->where('id_user', $cust->id_user); // Filter ketat by ID User
+            $this->db->where('id_user', $cust->id_user); 
             $this->db->order_by('created_at', 'DESC');
             $online = $this->db->get('order_online')->result_array();
         }
 
-        // C. Gabungkan Array Offline + Online
+        
         $result = array_merge($offline, $online);
 
-        // D. Urutkan Manual berdasarkan Tanggal (Terbaru di atas)
+        
         usort($result, function($a, $b) {
             return strtotime($b['tanggal']) - strtotime($a['tanggal']);
         });
 
-        return $result; // Kembalikan array hasil gabungan yang bersih
+        return $result; 
     }
 
-    // 5. Fungsi Helper ambil detail barang
+    
     public function get_detail_item_admin($id_order, $jenis_order) {
         if ($jenis_order == 'Offline') {
             $tabel = 'order_offline_detail';
@@ -106,14 +106,14 @@ class M_customer extends CI_Model
     {
         $hasil = [];
 
-        // --- 1. AMBIL DATA USER (ONLINE) ---
+        
         if (empty($filter) || $filter == 'online') {
             
             $this->db->select('*');
             $this->db->from('user');
             $this->db->where('role', 'user');
 
-            // LOGIKA PENCARIAN NAMA USER
+            
             if (!empty($keyword)) {
                 $this->db->like('nama_lengkap', $keyword);
             }
@@ -134,13 +134,13 @@ class M_customer extends CI_Model
             }
         }
 
-        // --- 2. AMBIL DATA CUSTOMER (OFFLINE) ---
+        
         if (empty($filter) || $filter == 'offline') {
             
             $this->db->select('*');
             $this->db->from('customer');
 
-            // LOGIKA PENCARIAN NAMA CUSTOMER
+            
             if (!empty($keyword)) {
                 $this->db->like('nama_customer', $keyword);
             }
@@ -161,7 +161,7 @@ class M_customer extends CI_Model
             }
         }
 
-        // Urutkan berdasarkan tanggal terbaru
+        
         usort($hasil, function($a, $b) {
             return strtotime($b->tanggal) - strtotime($a->tanggal);
         });

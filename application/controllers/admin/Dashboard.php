@@ -7,20 +7,24 @@ class Dashboard extends Admin_Controller {
     {
         parent::__construct();
         $this->load->database();
+        $this->load->model('M_produk');
     }
 
     public function index()
     {
         $data['title'] = 'Dashboard Admin';
 
-        // Hitung total
+       
         $data['total_produk']   = $this->db->count_all('produk');
         $data['total_supplier'] = $this->db->count_all('supplier');
         $data['total_customer'] = $this->db->count_all('customer');
         $data['order_offline']  = $this->db->count_all('order_offline');
         $data['order_online']   = $this->db->count_all('order_online');
+        $data['stok_menipis'] = $this->M_produk->get_stok_menipis(5);
+        $data['jml_menipis']  = count($data['stok_menipis']);
 
-        // Data grafik (OFFLINE)
+
+        
         $offline = $this->db->query("
             SELECT MONTH(created_at) AS bulan, COUNT(*) AS total
             FROM order_offline
@@ -28,7 +32,7 @@ class Dashboard extends Admin_Controller {
             GROUP BY MONTH(created_at)
         ")->result();
 
-        // Data grafik (ONLINE)
+        
         $online = $this->db->query("
             SELECT MONTH(created_at) AS bulan, COUNT(*) AS total
             FROM order_online
@@ -36,7 +40,7 @@ class Dashboard extends Admin_Controller {
             GROUP BY MONTH(created_at)
         ")->result();
 
-        // Siapkan array 12 bulan
+        
         $bulan = array_fill(1, 12, 0);
         $bulan_online = array_fill(1, 12, 0);
 

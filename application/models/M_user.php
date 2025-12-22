@@ -80,7 +80,7 @@ class M_user extends CI_Model {
     {
         return $this->db->get_where('user', ['email' => $email])->row();
     }
-    // Digunakan untuk update data (termasuk password)
+    
     public function update($id, $data)
     {
         $this->db->where('id_user', $id);

@@ -6,7 +6,7 @@ class Profile extends CI_Controller {
     public function __construct()
     {
         parent::__construct();
-        // Cek Login
+        
         if (!$this->session->userdata('logged_in') || $this->session->userdata('role') != 'user') {
             redirect('auth');
         }
@@ -17,12 +17,12 @@ class Profile extends CI_Controller {
         $data['title'] = 'Profil Saya';
         $id_user = $this->session->userdata('id_user');
         
-        // Ambil data user terbaru dari database
+        
         $data['user'] = $this->db->get_where('user', ['id_user' => $id_user])->row();
 
         $this->load->view('user/template/header', $data);
         $this->load->view('user/template/sidebar');
-        $this->load->view('user/profile', $data); // Kita buat view ini di langkah B
+        $this->load->view('user/profile', $data); 
         $this->load->view('user/template/footer');
     }
 
@@ -37,7 +37,7 @@ class Profile extends CI_Controller {
             'alamat'       => $this->input->post('alamat'),
         ];
 
-        // Update password hanya jika diisi
+        
         $password = $this->input->post('password');
         if (!empty($password)) {
             $data['password'] = password_hash($password, PASSWORD_DEFAULT);
@@ -46,7 +46,7 @@ class Profile extends CI_Controller {
         $this->db->where('id_user', $id_user);
         $this->db->update('user', $data);
 
-        // Update session nama jika berubah
+        
         $this->session->set_userdata('nama_lengkap', $data['nama_lengkap']);
 
         $this->session->set_flashdata('success', 'Profil berhasil diperbarui!');

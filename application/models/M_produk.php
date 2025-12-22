@@ -34,4 +34,10 @@ class M_produk extends CI_Model {
     {
         return $this->db->delete('produk', ['id_produk' => $id]);
     }
+    public function get_stok_menipis($batas = 5)
+{
+    $this->db->where('stok <=', $batas);
+    $this->db->where('stok >', 0);
+    return $this->db->get('produk')->result();
+}
 }

@@ -29,7 +29,7 @@ class Produk extends Admin_Controller {
 
     public function store()
     {
-        // Handle kategori
+        
         $kategori_baru = $this->input->post('kategori_baru');
         $id_kategori = $this->input->post('id_kategori');
 
@@ -41,7 +41,7 @@ class Produk extends Admin_Controller {
             $id_kategori = $this->db->insert_id();
         }
 
-        // Handle supplier
+        
         $supplier_baru = $this->input->post('supplier_baru');
         $id_supplier = $this->input->post('id_supplier');
 
@@ -53,12 +53,12 @@ class Produk extends Admin_Controller {
             $id_supplier = $this->db->insert_id();
         }
 
-        // Upload gambar - PENTING: panggil sebelum insert
+        
         $gambar = null;
         if (!empty($_FILES['gambar']['name'])) {
             $gambar = $this->_upload_image();
             
-            // Jika upload gagal, tampilkan error
+            
             if ($gambar === false) {
                 $this->session->set_flashdata('error', $this->upload->display_errors());
                 redirect('admin/produk/create');
@@ -66,7 +66,7 @@ class Produk extends Admin_Controller {
             }
         }
 
-        // Data produk
+        
         $data = [
             'nama_produk' => $this->input->post('nama_produk'),
             'harga'       => $this->input->post('harga'),
@@ -98,7 +98,7 @@ class Produk extends Admin_Controller {
         $this->load->model('M_supplier');
         $this->load->model('M_kategori');
 
-        // Handle Kategori
+        
         $id_kategori = $this->input->post('id_kategori');
         $kategori_baru = $this->input->post('kategori_baru');
 
@@ -110,7 +110,7 @@ class Produk extends Admin_Controller {
             $id_kategori = $this->db->insert_id();
         }
 
-        // Handle Supplier
+        
         $id_supplier = $this->input->post('id_supplier');
         $supplier_baru = $this->input->post('supplier_baru');
 
@@ -122,7 +122,7 @@ class Produk extends Admin_Controller {
             $id_supplier = $this->db->insert_id();
         }
 
-        // Data produk
+        
         $data = [
             'nama_produk' => $this->input->post('nama_produk'),
             'harga'       => $this->input->post('harga'),
@@ -131,13 +131,13 @@ class Produk extends Admin_Controller {
             'id_supplier' => $id_supplier,
         ];
 
-        // Handle upload gambar baru
+        
         if (!empty($_FILES['gambar']['name'])) {
-            // Upload gambar baru
+            
             $gambar_baru = $this->_upload_image();
             
             if ($gambar_baru !== false) {
-                // Hapus gambar lama setelah upload berhasil
+                
                 $gambar_lama = $this->input->post('gambar_lama');
                 if ($gambar_lama && file_exists('./assets/uploads/produk/' . $gambar_lama)) {
                     @unlink('./assets/uploads/produk/' . $gambar_lama);
@@ -151,7 +151,7 @@ class Produk extends Admin_Controller {
             }
         }
 
-        // Update database
+        
         $this->M_produk->update($id, $data);
         $this->session->set_flashdata('success', 'Produk berhasil diupdate');
         redirect('admin/produk');
@@ -159,10 +159,10 @@ class Produk extends Admin_Controller {
 
     public function delete($id)
     {
-        // Ambil data produk untuk menghapus gambarnya
+        
         $produk = $this->M_produk->get_by_id($id);
         
-        // Hapus file gambar jika ada
+        
         if ($produk && $produk->gambar) {
             $file_path = './assets/uploads/produk/' . $produk->gambar;
             if (file_exists($file_path)) {
@@ -170,7 +170,7 @@ class Produk extends Admin_Controller {
             }
         }
 
-        // Hapus data dari database
+        
         $this->M_produk->delete($id);
         $this->session->set_flashdata('success', 'Produk berhasil dihapus');
         redirect('admin/produk');
@@ -178,24 +178,24 @@ class Produk extends Admin_Controller {
 
     private function _upload_image()
     {
-        // Pastikan folder upload ada dan writable
+        
         $upload_path = './assets/uploads/produk/';
         
         if (!is_dir($upload_path)) {
             mkdir($upload_path, 0755, true);
         }
 
-        // Cek apakah folder writable
+        
         if (!is_writable($upload_path)) {
             log_message('error', 'Upload folder is not writable: ' . $upload_path);
             return false;
         }
 
-        // Konfigurasi upload
+        
         $config['upload_path']   = $upload_path;
         $config['allowed_types'] = 'jpg|jpeg|png|gif|webp';
-        $config['max_size']      = 2048; // 2MB
-        $config['encrypt_name']  = TRUE; // Gunakan nama random untuk keamanan
+        $config['max_size']      = 2048; 
+        $config['encrypt_name']  = TRUE; 
 
         $this->load->library('upload', $config);
         $this->upload->initialize($config);
