@@ -8,6 +8,7 @@
 **Raffi Frozen Food** adalah aplikasi e-commerce berbasis web untuk mengelola penjualan produk makanan beku. Sistem ini dirancang untuk menangani dua jenis transaksi sekaligus: **Order Online** (oleh customer terdaftar) dan **Order Offline** (Walk-in customer/Kasir).
 
 Project ini dibuat sebagai tugas mata kuliah Web Design / Pemrograman Web.
+Link Hosting Web https://frozenfoodraf.infinityfree.me/auth
 
 ---
 
@@ -82,7 +83,7 @@ Ikuti langkah-langkah ini untuk menjalankan project di komputer Anda:
         ```php
         'hostname' => 'localhost',
         'username' => 'root',
-        'password' => '', // Sesuaikan password db anda
+        'password' => '', 
         'database' => 'frozenfoodraf',
         ```
 
