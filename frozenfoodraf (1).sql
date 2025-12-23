@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3308
--- Generation Time: Dec 16, 2025 at 01:00 AM
+-- Generation Time: Dec 22, 2025 at 11:14 PM
 -- Server version: 10.4.32-MariaDB-log
 -- PHP Version: 7.4.33
 
@@ -43,7 +43,11 @@ CREATE TABLE `customer` (
 INSERT INTO `customer` (`id_customer`, `id_user`, `nama_customer`, `alamat`, `no_hp`, `created_at`) VALUES
 (1, NULL, 'Ilham', 'Tangerang', '0812365646', '2025-12-04 13:44:00'),
 (2, NULL, 'Ilham', '', '', '2025-12-04 13:45:21'),
-(3, NULL, 'Gilang', 'Cadas', '', '2025-12-10 15:07:41');
+(3, NULL, 'Gilang', 'Cadas', '', '2025-12-10 15:07:41'),
+(4, NULL, 'Gilang', NULL, NULL, '2025-12-17 05:53:52'),
+(5, NULL, 'Gilang', NULL, NULL, '2025-12-17 10:18:00'),
+(6, NULL, 'Raffi', NULL, NULL, '2025-12-17 10:20:53'),
+(7, NULL, 'Santoso', '-', '-', '2025-12-17 12:00:32');
 
 -- --------------------------------------------------------
 
@@ -86,7 +90,11 @@ CREATE TABLE `order_offline` (
 INSERT INTO `order_offline` (`id_order_offline`, `id_customer`, `total`, `status`, `created_at`) VALUES
 (1, 1, 35000, 'Success', '2025-12-04 13:44:00'),
 (2, 2, 10000, 'Success', '2025-12-04 13:45:21'),
-(3, 3, 45000, 'Success', '2025-12-10 15:07:41');
+(3, 3, 45000, 'Success', '2025-12-10 15:07:41'),
+(4, 4, 20000, 'Success', '2025-12-16 22:53:52'),
+(5, 5, 20000, 'Success', '2025-12-17 03:18:00'),
+(6, 6, 20000, 'Success', '2025-12-17 10:20:53'),
+(7, 7, 15000, 'Success', '2025-12-17 12:00:32');
 
 -- --------------------------------------------------------
 
@@ -110,7 +118,11 @@ INSERT INTO `order_offline_detail` (`id_detail`, `id_order_offline`, `id_produk`
 (1, 1, 6, 2, 20000),
 (2, 1, 7, 1, 15000),
 (3, 2, 6, 1, 10000),
-(4, 3, 7, 3, 45000);
+(4, 3, 7, 3, 45000),
+(5, 4, 6, 1, 20000),
+(6, 5, 6, 1, 20000),
+(7, 6, 6, 1, 20000),
+(8, 7, 7, 1, 15000);
 
 -- --------------------------------------------------------
 
@@ -135,7 +147,10 @@ INSERT INTO `order_online` (`id_order_online`, `id_user`, `total`, `bukti_bayar`
 (6, 3, 10000, 'Rekening_BCA.jpg', 'Success', '2025-12-07 07:59:27'),
 (7, 3, 10000, 'Screenshot_2025-12-08_165643.png', 'Cancelled', '2025-12-08 17:31:05'),
 (8, 4, 20000, 'b6916d93bc1d70a3dc13d28e342ae9ee.jpg', 'Cancelled', '2025-12-10 08:30:53'),
-(9, 4, 15000, '5bf2b141d85b88b9dc014eb92e61e9ca.jpg', 'Cancelled', '2025-12-10 08:40:10');
+(9, 4, 15000, '5bf2b141d85b88b9dc014eb92e61e9ca.jpg', 'Cancelled', '2025-12-10 08:40:10'),
+(10, 3, 15000, '8850cb07bba9f07b88d394819b9edf3c.jpeg', 'Success', '2025-12-17 10:44:53'),
+(11, 3, 210000, '64341e2c03594f857e150bcf884515b4.jpg', 'Cancelled', '2025-12-17 10:57:22'),
+(12, 3, 15000, 'bc2d80be016fade0ba3cb63d9d53968f.jpeg', 'Success', '2025-12-17 12:14:02');
 
 -- --------------------------------------------------------
 
@@ -159,7 +174,10 @@ INSERT INTO `order_online_detail` (`id_detail`, `id_order_online`, `id_produk`, 
 (1, 6, 6, 1, 10000),
 (2, 7, 6, 1, 10000),
 (3, 8, 6, 1, 20000),
-(4, 9, 7, 1, 15000);
+(4, 9, 7, 1, 15000),
+(5, 10, 7, 1, 15000),
+(6, 11, 7, 14, 210000),
+(7, 12, 7, 1, 15000);
 
 -- --------------------------------------------------------
 
@@ -184,8 +202,8 @@ CREATE TABLE `produk` (
 --
 
 INSERT INTO `produk` (`id_produk`, `id_kategori`, `nama_produk`, `harga`, `stok`, `id_supplier`, `gambar`, `created_at`, `updated_at`) VALUES
-(6, 1, 'Ayam Goreng Freeezer', 20000, 9, 2, '1abf3f1258cbe52865590b6a956ee9cd.jpg', '2025-12-03 09:00:29', '2025-12-10 15:30:53'),
-(7, 2, 'Bakso Beku', 15000, 15, 4, '9419af5682ab5597f3772eae578f6de7.jpg', '2025-12-03 13:40:15', '2025-12-14 12:26:04');
+(6, 1, 'Ayam Goreng Freeezer', 20000, 4, 2, '1abf3f1258cbe52865590b6a956ee9cd.jpg', '2025-12-03 09:00:29', '2025-12-23 05:41:01'),
+(7, 2, 'Bakso Beku', 15000, 12, 4, '9419af5682ab5597f3772eae578f6de7.jpg', '2025-12-03 13:40:15', '2025-12-17 12:14:02');
 
 -- --------------------------------------------------------
 
@@ -222,6 +240,8 @@ CREATE TABLE `user` (
   `password` varchar(255) NOT NULL,
   `nama_lengkap` varchar(150) DEFAULT NULL,
   `email` varchar(100) DEFAULT NULL,
+  `no_hp` varchar(20) DEFAULT NULL,
+  `alamat` text DEFAULT NULL,
   `role` enum('admin','user') NOT NULL DEFAULT 'user',
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
@@ -230,10 +250,10 @@ CREATE TABLE `user` (
 -- Dumping data for table `user`
 --
 
-INSERT INTO `user` (`id_user`, `username`, `password`, `nama_lengkap`, `email`, `role`, `created_at`) VALUES
-(2, 'admin2', '$2y$10$YXB9Jrd4nBSpDUHZH6mqfOkSpwxTDXDl6RjPjOubyVo4CxR6Q2CgK', 'Administrator Baru', NULL, 'admin', '2025-12-04 16:31:38'),
-(3, 'raffi', '$2y$10$RkOnDE2aZ5tzy6CoKDD2.OhZvJAOXKk4nGyU2I6SeWLL8X.x8VmSC', 'Raffi', NULL, 'user', '2025-12-04 16:36:04'),
-(4, 'daffa', '$2y$10$Ky4PfoWLUycBU6veB/BbTue0WzuL3QO1SLYWkTkV4FE6JECTzylPC', 'daffa dermawan', 'daffatest@gmail.com', 'user', '2025-12-08 22:41:35');
+INSERT INTO `user` (`id_user`, `username`, `password`, `nama_lengkap`, `email`, `no_hp`, `alamat`, `role`, `created_at`) VALUES
+(2, 'admin2', '$2y$10$YXB9Jrd4nBSpDUHZH6mqfOkSpwxTDXDl6RjPjOubyVo4CxR6Q2CgK', 'Administrator Baru', 'admin@gmail.com', NULL, NULL, 'admin', '2025-12-04 16:31:38'),
+(3, 'raffi', '$2y$10$RkOnDE2aZ5tzy6CoKDD2.OhZvJAOXKk4nGyU2I6SeWLL8X.x8VmSC', 'Raffi', 'raffi@gmail.com', '081223656546', 'Cadas', 'user', '2025-12-04 16:36:04'),
+(4, 'daffa', '$2y$10$Ky4PfoWLUycBU6veB/BbTue0WzuL3QO1SLYWkTkV4FE6JECTzylPC', 'daffa dermawan', 'daffatest@gmail.com', NULL, NULL, 'user', '2025-12-08 22:41:35');
 
 --
 -- Indexes for dumped tables
@@ -310,7 +330,7 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT for table `customer`
 --
 ALTER TABLE `customer`
-  MODIFY `id_customer` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_customer` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `kategori`
@@ -322,25 +342,25 @@ ALTER TABLE `kategori`
 -- AUTO_INCREMENT for table `order_offline`
 --
 ALTER TABLE `order_offline`
-  MODIFY `id_order_offline` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_order_offline` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `order_offline_detail`
 --
 ALTER TABLE `order_offline_detail`
-  MODIFY `id_detail` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_detail` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `order_online`
 --
 ALTER TABLE `order_online`
-  MODIFY `id_order_online` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_order_online` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `order_online_detail`
 --
 ALTER TABLE `order_online_detail`
-  MODIFY `id_detail` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_detail` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `produk`
